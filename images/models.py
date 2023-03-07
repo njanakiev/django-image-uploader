@@ -3,6 +3,7 @@ from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
+from django.urls import reverse
 
 
 def validate_file_size(obj):
@@ -33,3 +34,6 @@ class Image(models.Model):
             )
         ]
     )
+
+    def get_absolute_url(self):
+        return reverse('image', kwargs={'pk': self.pk})
