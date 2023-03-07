@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 
 
 class ImageAdmin(admin.ModelAdmin):
-    list_display = ['name', 'author', 'created_at', 'updated_at', 'image']
+    list_display = ['title', 'author', 'created_at', 'updated_at', 'image']
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if self.obj:

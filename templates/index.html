@@ -1,12 +1,34 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Viewer</title>
-</head>
-<body>
-    <h1>Image Viewer</h1>
-</body>
-</html>
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="py-5 text-center container">
+  <div class="row py-lg-5">
+    <div class="col-lg-6 col-md-8 mx-auto">
+      <h1 class="fw-light">Image Viewer</h1>
+      <p class="lead text-muted">Image upload and viewer app written in Django.</p>
+      <a href="{% url 'about' %}" class="btn btn-primary my-2">Learn More</a>
+    </div>
+  </div>
+</section>
+
+<div class="album py-5 bg-light">
+  <div class="container">
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+      {% for image in images %}
+      <div class="col">
+        <div class="card shadow-sm">
+          <img class="card-img-top" src="{{ image.image.url }}" alt="{{ image.title }}">
+          <div class="card-body">
+            <h5 class="card-title">{{ image.title }}</h5>
+            <p class="card-text">{{ image.description }}</p>
+            <div class="d-flex justify-content-between align-items-center">
+              <small class="text-muted">{{ image.created_at|date:"d M Y" }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
