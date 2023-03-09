@@ -27,9 +27,6 @@
       - "--delete"
     remote_user: "{{ username }}"
 
-  - debug:
-      msg: "/opt/{{ project_slug }}/.env"
-
   - name: Copy .prod.env
     copy:
       src: "../.prod.env"
