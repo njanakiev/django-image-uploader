@@ -10,7 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,13 +24,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-1=4&(lkmebui)ke2jx_htky-@u^$oozg2kbu@=t=8&7ors_+n#'
+SECRET_KEY = os.environ['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", 'False').lower() in ('true', '1')
+
+SERVER_NAME = os.getenv('SERVER_NAME', 'localhost')
 
 ALLOWED_HOSTS = []
 
+if not DEBUG:
+    ALLOWED_HOSTS.append(SERVER_NAME)
+    CSRF_TRUSTED_ORIGINS = [
+        f"https://{SERVER_NAME}"
+    ]
 
 # Application definition
 
@@ -75,13 +86,23 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': os.environ['POSTGRES_DB'], 
+        'USER': os.environ['POSTGRES_USER'],
+        'PASSWORD': os.environ['POSTGRES_PASSWORD'],
+        'HOST': os.environ['POSTGRES_HOST'], 
+        'PORT': os.environ['POSTGRES_PORT'],
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -118,8 +139,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [ BASE_DIR / "static", ]
-STATIC_ROOT = BASE_DIR / "static-cdn"
+MEDIA_URL = '/media/'
+STATICFILES_DIRS = [ BASE_DIR / "static" ]
+
+if DEBUG:
+    MEDIA_ROOT = BASE_DIR / 'media/'
+    STATIC_ROOT = BASE_DIR / "static-cdn/"
+else:
+    MEDIA_ROOT = f"/usr/share/nginx/html/{SERVER_NAME}/media/"
+    STATIC_ROOT = f"/usr/share/nginx/html/{SERVER_NAME}/static/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
@@ -129,7 +157,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.User'
 
 MAX_FILESIZE = 1048576  # 1MB
-
-MEDIA_ROOT = BASE_DIR / 'media/'
-
-MEDIA_URL = '/media/'

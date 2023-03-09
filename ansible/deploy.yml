@@ -1,0 +1,88 @@
+---
+- name: Deploy Django Demo.
+  hosts: alpha
+  user: user
+  gather_facts: false
+
+  vars_files:
+  - "config.yml"
+
+  tasks:
+  - name: Sync source code.
+    synchronize:
+      src: "../../"
+      dest: "/opt/{{ project_slug }}"
+      rsync_opts:
+      - "--exclude=.git"
+      - "--exclude=venv"
+      - "--exclude=ansible"
+      - "--exclude=media"
+      - "--exclude=static-cdn"
+      - "--exclude=*.env"
+      - "--delete"
+    remote_user: "{{ username }}"
+
+  - name: Copy .prod.env
+    copy:
+      src: "../.prod.env"
+      dest: "/opt/{{ project_slug }}/.env"
+      owner: "{{ username }}"
+      group: "{{ username }}"
+
+  - name: Run database migrations.
+    command: 
+      cmd: "venv/bin/python manage.py migrate"
+      chdir: "/opt/{{ project_slug }}"
+    become_user: "{{ username }}"
+    become: true
+
+  - name: Collect static files.
+    command: 
+      cmd: "venv/bin/python manage.py collectstatic --noinput"
+      chdir: "/opt/{{ project_slug }}"
+    become_user: "{{ username }}"
+    become: true
+
+
+  - name: Copy systemd service.
+    template:
+      src: systemd.service.j2
+      dest: "/etc/systemd/system/{{ project_slug }}.service"
+    become: true
+
+  - name: Reload and restart service.
+    systemd:
+      name: "{{ project_slug }}.service"
+      daemon_reload: true
+      enabled: true
+      state: restarted
+    become: true
+
+
+  - name: Create folder for media and static.
+    file:
+      path: "/usr/share/nginx/html/{{ server_name }}"
+      state: directory
+      owner: "{{ username }}"
+      group: "{{ username }}"
+    become: true
+
+  - name: Copy nginx configuration.
+    template:
+      src: nginx.conf.j2
+      dest: "/etc/nginx/conf.d/{{ server_name }}.conf"
+    become: true
+    register: result_nginx
+
+  - name: Verify nginx configuration.
+    become: true
+    command: nginx -t
+    changed_when: false
+    when: result_nginx.changed
+
+  - name: Restart nginx.
+    service:
+      name: nginx.service
+      state: restarted
+    become: true
+    when: result_nginx.changed

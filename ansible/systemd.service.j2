@@ -1,0 +1,22 @@
+# imagioo.service
+# For running {{ project_name }} using Gunicorn with a config file
+
+[Unit]
+Description={{ project_name }}
+After=network.target
+
+[Service]
+Restart=always
+RestartSec=10
+User={{ username }}
+Group={{ username }}
+WorkingDirectory=/opt/{{ project_slug }}
+Environment="PATH=/opt/{{ project_slug }}/venv/bin"
+ExecStart=/opt/{{ project_slug }}/venv/bin/gunicorn \
+  --workers 2 \
+  --threads 4 \
+  --bind 0.0.0.0:{{ gunicorn_port }} \
+  config.wsgi:application
+
+[Install]
+WantedBy=multi-user.target

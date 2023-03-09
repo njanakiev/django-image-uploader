@@ -1,0 +1,100 @@
+---
+- name: Deploy Django app
+  hosts: all
+  become: yes
+
+  vars:
+    # Set the name of your Django project and the path to your local project directory
+    project_name: myproject
+    project_dir: /path/to/local/project/directory
+    # Set the name of the virtual environment and the user that will own it
+    virtualenv_name: myenv
+    virtualenv_user: myuser
+
+  tasks:
+  - name: Ensure Python 3 and pip are installed
+    apt:
+      name: "{{ item }}"
+      state: present
+    loop:
+      - python3
+      - python3-pip
+
+  - name: Ensure virtualenv is installed
+    pip:
+      name: virtualenv
+      state: present
+
+  - name: Create virtual environment
+    command: virtualenv "{{ project_dir }}/{{ virtualenv_name }}"
+    become_user: "{{ virtualenv_user }}"
+
+  - name: Sync project directory to server
+    synchronize:
+      src: "{{ project_dir }}/"
+      dest: "{{ project_dir }}/"
+      rsync_opts:
+        - "--exclude=.venv"
+        - "--exclude=.git"
+        - "--delete"
+    register: sync_output
+
+  - name: Install Python packages in virtual environment
+    pip:
+      requirements: "{{ project_dir }}/{{ project_name }}/requirements.txt"
+      virtualenv: "{{ project_dir }}/{{ virtualenv_name }}"
+      state: present
+    become_user: "{{ virtualenv_user }}"
+
+  - name: Set environment variables
+    lineinfile:
+      path: /etc/environment
+      line: "DJANGO_SETTINGS_MODULE={{ project_name }}.settings.production"
+      state: present
+
+  - name: Run database migrations
+    command: "{{ project_dir }}/{{ virtualenv_name }}/bin/python {{ project_dir }}/{{ project_name }}/manage.py migrate"
+    become_user: "{{ virtualenv_user }}"
+
+  - name: Collect static files
+    command: "{{ project_dir }}/{{ virtualenv_name }}/bin/python {{ project_dir }}/{{ project_name }}/manage.py collectstatic --noinput"
+    become_user: "{{ virtualenv_user }}"
+
+  - name: Start Gunicorn
+    systemd:
+      name: gunicorn
+      state: started
+      enabled: yes
+      daemon_reload: yes
+      # Replace "myproject" with the name of your Django project
+      # Replace "/path/to/project" with the path to your project directory
+      # Replace "myenv" with the name of your virtual environment
+      # Replace "myuser" with the user that owns the virtual environment
+      # Replace "8000" with the port you want Gunicorn to listen on
+      # Replace "4" with the number of workers you want Gunicorn to use
+      # Replace "myproject.wsgi:application" with the path to your WSGI application
+      # inside your Django project
+      # Make sure the path to the WSGI application is relative to the project directory
+      args:
+        PIDFile: "/run/gunicorn/{{ project_name }}.pid"
+        User: "{{ virtualenv_user }}"
+        WorkingDirectory: "{{ project_dir }}/{{ project_name }}"
+        ExecStart: "{{ project_dir }}/{{ virtualenv_name }}/bin/gunicorn --pid /run/gunicorn/{{ project_name }}.pid --bind 127.0.0.1:8000 --workers 4 --timeout 120 {{ project_name }}.wsgi:application"
+        ExecReload: "/bin/kill -s HUP $MAINPID"
+    
+  - name: Configure Nginx
+    template:
+      src: "nginx.conf.j2"
+      dest: "/etc/nginx/sites-available/{{ project_name }}"
+    notify:
+      - Reload Nginx
+
+  - name: Enable Nginx site
+    command: "ln -sf /etc/nginx/sites-available/{{ project_name }} /etc/nginx/sites-enabled/{{ project_name }}"
+    notify:
+      - Reload Nginx
+    handlers:
+    - name: Reload Nginx
+      service:
+      name: nginx
+      state: reloaded

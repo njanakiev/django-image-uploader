@@ -1,0 +1,74 @@
+---
+- name: Setup server for Django Demo.
+  hosts: alpha
+  user: user
+  gather_facts: false
+
+  vars_files:
+  - "config.yml"
+
+  tasks:
+  - name: "Create user {{ username }}."
+    user:
+      name: "{{ username }}"
+      shell: /bin/bash
+    become: true
+    register: result_create_user
+
+  - name: "Add SSH key to {{ username }}."
+    authorized_key:
+      user: "{{ username }}"
+      state: present
+      key: "{{ lookup('file', ssh_keys) }}"
+    become: true
+    when: result_create_user.changed
+
+  - name: Install packages.
+    apt:
+      update_cache: true
+      cache_valid_time: 3600
+      pkg:
+      - python3-pip
+      - python3-venv
+      - python-is-python3
+    become: true
+    when: result_create_user.changed
+
+
+  - name: Make sure project folder exists.
+    file:
+      path: "/opt/{{ project_slug }}"
+      state: directory
+      owner: "{{ username }}"
+      group: "{{ username }}"
+    become: true
+
+  - name: Copy requirements.txt
+    copy:
+      src: "../requirements.txt"
+      dest: "/opt/{{ project_slug }}/requirements.txt"
+    remote_user: "{{ username }}"
+    register: result_requirements
+  
+  - name: Install venv environment.
+    pip:
+      requirements: "/opt/{{ project_slug }}/requirements.txt"
+      virtualenv: "/opt/{{ project_slug }}/venv"
+      virtualenv_command: python -m venv
+    remote_user: "{{ username }}"
+    when: result_requirements.changed
+
+
+  - name: Create Django db in PostgreSQL.
+    postgresql_db:
+      name: '{{ lookup("env", "POSTGRES_DB") }}'
+    become_user: postgres
+    become: true
+
+  - name: Create Django user in PostgreSQL.
+    postgresql_user:
+      db: '{{ lookup("env", "POSTGRES_DB") }}'
+      name: '{{ lookup("env", "POSTGRES_USER") }}'
+      password: '{{ lookup("env", "POSTGRES_PASSWORD") }}'
+    become_user: postgres
+    become: true
