@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Image Upload</title>
+  <title>{% block title %}Image Uploader{% endblock %}</title>
   <link href="{% static 'css/bootstrap-5.2.3.min.css' %}" rel="stylesheet">
   <link href="{% static 'css/style.css' %}" rel="stylesheet">
 </head>
@@ -24,10 +24,6 @@
             <a class="nav-link active" aria-current="page" href="{% url 'about' %}">About</a>
           </li>
         </ul>
-        <form class="d-flex" role="search">
-          <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-          <button class="btn btn-primary" type="submit">Search</button>
-        </form>
       </div>
     </div>
   </nav>

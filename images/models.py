@@ -17,12 +17,12 @@ class Image(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
-    created_at = models.DateTimeField(default=timezone.now, editable=True)
+    created_at = models.DateTimeField(
+        default=timezone.now, editable=True)
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
-    #file = models.FileField(
     image = models.ImageField(
         #blank=True,
         #null=True,
