@@ -4,8 +4,13 @@
   user: user
   gather_facts: false
 
-  vars_files:
-  - "config.yml"
+  vars:
+  - gunicorn_port: '{{ lookup("env", "PORT") }}'
+  - server_name: '{{ lookup("env", "SERVER_NAME") }}'
+  - project_name: 'Django Demo'
+  - username: '{{ lookup("env", "DJANGO_USERNAME") }}'
+  - project_slug: '{{ lookup("env", "PROJECT_SLUG") }}'
+  - is_subdomain: '{{ lookup("env", "IS_SUBDOMAIN") | bool }}'
 
   tasks:
   - name: Sync source code.
@@ -22,12 +27,16 @@
       - "--delete"
     remote_user: "{{ username }}"
 
+  - debug:
+      msg: "/opt/{{ project_slug }}/.env"
+
   - name: Copy .prod.env
     copy:
       src: "../.prod.env"
       dest: "/opt/{{ project_slug }}/.env"
       owner: "{{ username }}"
       group: "{{ username }}"
+    become: true
 
   - name: Run database migrations.
     command: 

@@ -4,8 +4,10 @@
   user: user
   gather_facts: false
 
-  vars_files:
-  - "config.yml"
+  vars:
+  - ssh_keys_path: ~/.ssh/contabo.pub
+  - username: '{{ lookup("env", "DJANGO_USERNAME") }}'
+  - project_slug: '{{ lookup("env", "PROJECT_SLUG") }}'
 
   tasks:
   - name: "Create user {{ username }}."
@@ -19,7 +21,7 @@
     authorized_key:
       user: "{{ username }}"
       state: present
-      key: "{{ lookup('file', ssh_keys) }}"
+      key: "{{ lookup('file', ssh_keys_path) }}"
     become: true
     when: result_create_user.changed
 

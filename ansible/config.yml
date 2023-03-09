@@ -1,7 +1,0 @@
-ssh_keys: ~/.ssh/contabo.pub
-username: djangodemo
-project_slug: django-demo
-project_name: Django Demo       # only systemd service
-server_name: demo.datenbau.com  # only nginx
-gunicorn_port: 8020             # only nginx
-is_subdomain: true              # only nginx
