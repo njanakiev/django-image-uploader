@@ -3,13 +3,13 @@
 {% block content %}
 <div class="container">
   <div class="row gy-3 m-4 py-3">
-    <div class="col-md-6">
+    <div class="col-md-7">
       <img class="img-detail img-fluid rounded" src="{{ image.image.url }}" alt="{{ image.title }}">
     </div>
-    <div class="col-md-6">
-      <h1>{{ image.title }}</h1>
+    <div class="col-md-5">
+      <h2 class="fw-normal text-break">{{ image.title }}</h2>
       <p>{{ image.description }}</p>
-      <p class="text-muted">Created: {{ image.created_at }}</p>
+      <p class="fw-light text-muted">Created: {{ image.created_at }}</p>
     </div>
   </div>
 </div>
