@@ -2,8 +2,6 @@ from django.core.management import BaseCommand
 from typing import Any, Optional
 import pandas as pd
 from images.models import Image
-from django.conf import settings
-from sqlalchemy import create_engine
 from django.contrib.auth import get_user_model
 
 
@@ -24,14 +22,6 @@ class Command(BaseCommand):
         User = get_user_model()
         user = User.objects.get(username__exact=username)
 
-        postgres_user     = settings.DATABASES['default']['USER']
-        postgres_password = settings.DATABASES['default']['PASSWORD']
-        postgres_host     = settings.DATABASES['default']['HOST']
-        postgres_port     = settings.DATABASES['default']['PORT']
-        postgres_db       = settings.DATABASES['default']['NAME']
-        engine = create_engine(
-            f'postgresql://{postgres_user}:{postgres_password}@' \
-            f'{postgres_host}:{postgres_port}/{postgres_db}')
 
         df = pd.read_csv(filepath, delimiter="\t")
         if n_samples:
@@ -45,15 +35,17 @@ class Command(BaseCommand):
             'photo_submitted_at': 'created_at'
         })
         df = df.dropna(subset=['title'])
-        df['created_at'] = pd.to_datetime(df['created_at'])
+        df['created_at'] = pd.to_datetime(df['created_at'], utc=True)
         df['updated_at'] = df['created_at'].copy()
         df['image'] = df['image'].apply(lambda s: f"{s}.jpg")
         df['author_id'] = user.id
-        df['id'] = df.index
+        df['description'] = df['description'].fillna('')
+        df['title'] = df['title'].str[:200]
 
-        df.head(200).to_sql(
-            Image._meta.db_table,
-            if_exists='replace',
-            con=engine,
-            index=False
-        )
+        df.reset_index(drop=True, inplace=True)
+        #df.index.name = 'id'
+        #df = df.reset_index()
+
+        Image.objects.all().delete()
+        items = [Image(**item) for i, item in enumerate(df.to_dict(orient="records"))]
+        Image.objects.bulk_create(items)
