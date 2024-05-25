@@ -9,7 +9,6 @@
   <link href="{% static 'css/style.css' %}" rel="stylesheet">
 </head>
 <body>
-<script src="{% static 'js/bootstrap.bundle-5.2.3.min.js' %}"></script>
 
 <header>
   <nav class="navbar navbar-expand-md navbar-dark bg-dark">
@@ -37,6 +36,24 @@
 <main>
 {% block content %}{% endblock %}
 </main>
+
+<script src="{% static 'js/bootstrap.bundle-5.2.3.min.js' %}"></script>
+<script src="{% static 'js/masonry.pkgd-4.2.2.min.js' %}"></script>
+<script src="{% static 'js/imagesloaded.pkgd-4.min.js' %}"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const grid = document.querySelector('#image-grid');
+      
+    imagesLoaded(grid, function() {
+      const masonry = new Masonry(grid, {
+          itemSelector: '.col',
+          columnWidth: '.col',
+          percentPosition: true
+      });
+    });
+  });
+</script>
 
 </body>
 </html>
