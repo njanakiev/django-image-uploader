@@ -2,6 +2,8 @@
 
 A Django example application that allows users to upload images, which are then displayed on the home page with a search functionality. Users can upload images via the built-in Django admin interface.
 
+![Screenshot](screenshot.jpg)
+
 # Run Locally
 
 Create Python virtual environment with:
