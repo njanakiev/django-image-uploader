@@ -15,7 +15,7 @@
   tasks:
   - name: Sync source code.
     synchronize:
-      src: "../../"
+      src: "../app/"
       dest: "/opt/{{ project_slug }}"
       rsync_opts:
       - "--exclude=.git"
@@ -42,6 +42,15 @@
     become_user: "{{ username }}"
     become: true
 
+
+  - name: Create folder for media and static.
+    file:
+      path: "/usr/share/nginx/html/{{ server_name }}"
+      state: directory
+      owner: "{{ username }}"
+      group: "{{ username }}"
+    become: true
+
   - name: Collect static files.
     command: 
       cmd: "venv/bin/python manage.py collectstatic --noinput"
@@ -64,14 +73,6 @@
       state: restarted
     become: true
 
-
-  - name: Create folder for media and static.
-    file:
-      path: "/usr/share/nginx/html/{{ server_name }}"
-      state: directory
-      owner: "{{ username }}"
-      group: "{{ username }}"
-    become: true
 
   - name: Copy nginx configuration.
     template:

@@ -5,7 +5,7 @@
   gather_facts: false
 
   vars:
-  - ssh_keys_path: ~/.ssh/contabo.pub
+  - ssh_keys_path: '{{ lookup("env", "SSH_KEY_PATH") }}'
   - username: '{{ lookup("env", "DJANGO_USERNAME") }}'
   - project_slug: '{{ lookup("env", "PROJECT_SLUG") }}'
 
@@ -47,7 +47,7 @@
 
   - name: Copy requirements.txt
     copy:
-      src: "../requirements.txt"
+      src: "../app/requirements.txt"
       dest: "/opt/{{ project_slug }}/requirements.txt"
     remote_user: "{{ username }}"
     register: result_requirements

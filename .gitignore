@@ -1,4 +1,6 @@
-*.env
+.env
+.prod.env
+.docker.env
 media/
 
 # Byte-compiled / optimized / DLL files
